@@ -1,7 +1,11 @@
+require('dotenv').config();
+
 const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
 const { userDbConfig, port, corsOrigin } = require('./config');
 
@@ -37,12 +41,83 @@ const User = mongoose.model('User', userSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 const app = express();
 
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Chozhan Mobiles API',
+      version: '1.0.0',
+      description: 'API documentation for authentication, sales, and services transactions.'
+    },
+    servers: [
+      {
+        url: `http://localhost:${port}`
+      }
+    ],
+    components: {
+      schemas: {
+        LoginRequest: {
+          type: 'object',
+          required: ['username', 'password'],
+          properties: {
+            username: { type: 'string', example: 'admin' },
+            password: { type: 'string', example: 'Admin@123' }
+          }
+        },
+        LoginResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Login successful.' },
+            user: {
+              type: 'object',
+              properties: {
+                username: { type: 'string', example: 'admin' },
+                fullName: { type: 'string', example: 'Store Administrator' }
+              }
+            }
+          }
+        },
+        Transaction: {
+          type: 'object',
+          required: ['type', 'customerName', 'phoneModel', 'brand', 'amount', 'profit', 'date'],
+          properties: {
+            _id: { type: 'string', example: '6610b90ab213f8f10e123456' },
+            type: { type: 'string', enum: ['sale', 'service'], example: 'sale' },
+            customerName: { type: 'string', example: 'Arun Kumar' },
+            phoneModel: { type: 'string', example: 'Galaxy S24' },
+            brand: { type: 'string', example: 'Samsung' },
+            amount: { type: 'number', example: 65000 },
+            profit: { type: 'number', example: 4500 },
+            date: { type: 'string', example: '2026-04-05' },
+            notes: { type: 'string', example: 'Customer requested screen guard.' }
+          }
+        },
+        HealthResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'ok' }
+          }
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Unable to create transaction.' },
+            error: { type: 'string', example: 'Validation error details.' }
+          }
+        }
+      }
+    }
+  },
+  apis: [__filename]
+});
+
 app.use(
   cors({
     origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((origin) => origin.trim())
   })
 );
 app.use(express.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 if (!userDbConfig.CONNECTION_STRING) {
   console.error('MongoDB connection string is missing. Set CONNECTION_STRING before starting the API.');
@@ -61,10 +136,48 @@ mongoose
     console.error('MongoDB connection failed', error);
   });
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Check API health
+ *     tags:
+ *       - System
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok' });
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate a user
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Invalid credentials
+ */
 app.post('/api/auth/login', async (request, response) => {
   try {
     const { username, password } = request.body;
@@ -86,6 +199,37 @@ app.post('/api/auth/login', async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/transactions:
+ *   get:
+ *     summary: List transactions
+ *     tags:
+ *       - Transactions
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [sale, service]
+ *         required: false
+ *         description: Filter by transaction type
+ *     responses:
+ *       200:
+ *         description: Transactions fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Transaction'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.get('/api/transactions', async (request, response) => {
   try {
     const filter = request.query.type ? { type: request.query.type } : {};
@@ -96,6 +240,33 @@ app.get('/api/transactions', async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/transactions:
+ *   post:
+ *     summary: Create a transaction
+ *     tags:
+ *       - Transactions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Transaction'
+ *     responses:
+ *       201:
+ *         description: Transaction created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Transaction'
+ *       400:
+ *         description: Validation or create error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.post('/api/transactions', async (request, response) => {
   try {
     const transaction = await Transaction.create({
@@ -108,6 +279,37 @@ app.post('/api/transactions', async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/transactions/{id}:
+ *   put:
+ *     summary: Update a transaction
+ *     tags:
+ *       - Transactions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Transaction'
+ *     responses:
+ *       200:
+ *         description: Transaction updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Transaction'
+ *       404:
+ *         description: Transaction not found
+ *       400:
+ *         description: Validation or update error
+ */
 app.put('/api/transactions/:id', async (request, response) => {
   try {
     const transaction = await Transaction.findByIdAndUpdate(
@@ -132,6 +334,27 @@ app.put('/api/transactions/:id', async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/transactions/{id}:
+ *   delete:
+ *     summary: Delete a transaction
+ *     tags:
+ *       - Transactions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Transaction deleted
+ *       404:
+ *         description: Transaction not found
+ *       400:
+ *         description: Delete error
+ */
 app.delete('/api/transactions/:id', async (request, response) => {
   try {
     const transaction = await Transaction.findByIdAndDelete(request.params.id);

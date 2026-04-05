@@ -37,5 +37,5 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: YOUR_API_APP_SERVICE_NAME
+          app-name: UserApi
           package: .
