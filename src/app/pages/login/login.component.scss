@@ -1,0 +1,143 @@
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 420px);
+  gap: 2rem;
+  align-items: center;
+  padding: clamp(1.5rem, 4vw, 4rem);
+}
+
+.hero-copy {
+  color: var(--text-main);
+}
+
+.shop-title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(4.2rem, 12vw, 9rem);
+  line-height: 0.84;
+  font-weight: 700;
+  letter-spacing: -0.07em;
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  line-height: 0.95;
+  max-width: 10ch;
+}
+
+.subtext {
+  max-width: 36rem;
+  color: var(--text-soft);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.highlights {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.highlights article,
+.login-card {
+  backdrop-filter: blur(20px);
+  background: var(--surface-strong);
+  border: 1px solid var(--accent-soft);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  border-radius: 28px;
+}
+
+.highlights article {
+  padding: 1.2rem 1.4rem;
+}
+
+.highlights span {
+  display: block;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.highlights strong {
+  color: var(--text-main);
+  font-size: 1rem;
+}
+
+.login-card {
+  padding: 2rem;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.card-label {
+  margin: 0;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.14rem;
+  font-size: 0.75rem;
+}
+
+h2 {
+  margin: 0.35rem 0 0;
+  color: var(--text-main);
+  font-size: 2rem;
+}
+
+label {
+  display: grid;
+  gap: 0.55rem;
+  color: var(--text-main);
+}
+
+input {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  font: inherit;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 1rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: #1b1916;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.error-message {
+  margin: 0;
+  color: #ffb3b3;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    max-width: none;
+  }
+}

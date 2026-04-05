@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  --bg-1: #08131b;
+  --bg-2: #112431;
+  --surface: rgba(15, 22, 29, 0.7);
+  --surface-strong: rgba(16, 26, 31, 0.65);
+  --accent: #f5c58b;
+  --accent-strong: #ff8a5b;
+  --accent-soft: rgba(245, 197, 139, 0.18);
+  --accent-rgb: 245, 197, 139;
+  --text-main: #f7f1e7;
+  --text-soft: rgba(247, 241, 231, 0.72);
+  --danger-soft: rgba(255, 109, 109, 0.16);
+  --danger-text: #ffd4d4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Outfit', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(var(--accent-rgb), 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(var(--accent-rgb), 0.14), transparent 22%),
+    linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 45%, #071017 100%);
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+}

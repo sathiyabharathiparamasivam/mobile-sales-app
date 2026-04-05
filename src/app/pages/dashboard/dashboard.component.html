@@ -1,0 +1,172 @@
+<section class="dashboard-shell">
+  <header class="topbar">
+    <div>
+      <p class="shop-title">Chozhan Mobiles</p>
+      <h1>Sales and service dashboard</h1>
+      <p class="subtitle">Welcome {{ currentUser?.fullName || currentUser?.username }}. Keep daily operations flowing.</p>
+    </div>
+    <div class="topbar-actions">
+      <div class="theme-panel">
+        <button class="ghost-button" type="button" (click)="toggleThemePicker()">Change theme</button>
+        <label class="theme-picker" *ngIf="showThemePicker()">
+          <span>Accent color</span>
+          <input type="color" [value]="themeColor()" (input)="updateThemeColor($any($event.target).value)" />
+        </label>
+      </div>
+      <button class="ghost-button" type="button" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="summary-grid">
+    <article>
+      <span>Current tab</span>
+      <strong>{{ activeTab() === 'sale' ? 'Sales' : 'Services' }}</strong>
+    </article>
+    <article>
+      <span>Selected month</span>
+      <strong>{{ formatMonth(selectedMonth()) }}</strong>
+    </article>
+    <article>
+      <span>Monthly total</span>
+      <strong>{{ totalAmount() | currency:'INR':'symbol':'1.0-0' }}</strong>
+    </article>
+    <article>
+      <span>Monthly profit</span>
+      <strong>{{ totalProfit() | currency:'INR':'symbol':'1.0-0' }}</strong>
+    </article>
+  </div>
+
+  <div class="toolbar-row">
+    <div class="tab-row">
+      <button type="button" [class.active]="activeTab() === 'sale'" (click)="switchTab('sale')">Sales</button>
+      <button type="button" [class.active]="activeTab() === 'service'" (click)="switchTab('service')">Services</button>
+    </div>
+
+    <label class="month-filter">
+      <span>View by month</span>
+      <input type="month" [value]="selectedMonth()" (input)="onMonthChange($any($event.target).value)" />
+    </label>
+  </div>
+
+  <div class="content-grid">
+    <form class="editor-card" [formGroup]="transactionForm" (ngSubmit)="submit()">
+      <div class="card-head">
+        <div>
+          <p class="card-label">{{ activeTab() === 'sale' ? 'Sales entry' : 'Service entry' }}</p>
+          <h2>{{ editingId() ? 'Update record' : 'Create new record' }}</h2>
+        </div>
+        <button class="ghost-button" type="button" *ngIf="editingId()" (click)="switchTab(activeTab())">Clear</button>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>Customer name</span>
+          <input type="text" formControlName="customerName" />
+        </label>
+
+        <label>
+          <span>Phone model</span>
+          <input type="text" formControlName="phoneModel" />
+        </label>
+
+        <label>
+          <span>Brand</span>
+          <input type="text" formControlName="brand" />
+        </label>
+
+        <label>
+          <span>{{ activeTab() === 'sale' ? 'Sale amount' : 'Service amount' }}</span>
+          <input type="number" formControlName="amount" />
+        </label>
+
+        <label>
+          <span>{{ activeTab() === 'sale' ? 'Sale profit' : 'Service profit' }}</span>
+          <input type="number" formControlName="profit" />
+        </label>
+
+        <label class="date-field">
+          <span>Date</span>
+          <input type="date" formControlName="date" />
+        </label>
+
+        <label class="full-width notes-field">
+          <span>Notes</span>
+          <textarea rows="4" formControlName="notes"></textarea>
+        </label>
+      </div>
+
+      <p class="status-message" *ngIf="statusMessage()">{{ statusMessage() }}</p>
+
+      <button class="primary-button submit-button" type="submit" [disabled]="isSaving()">
+        {{ isSaving() ? 'Saving...' : editingId() ? 'Update record' : 'Create record' }}
+      </button>
+    </form>
+
+    <section class="list-card">
+      <div class="card-head">
+        <div>
+          <p class="card-label">{{ activeTab() === 'sale' ? 'Sales list' : 'Service list' }}</p>
+          <h2>{{ monthlyRecords().length }} records in {{ formatMonth(selectedMonth()) }}</h2>
+        </div>
+      </div>
+
+      <div class="monthly-highlights">
+        <article *ngFor="let month of monthGroups().slice(0, 3)">
+          <span>{{ formatMonth(month.month) }}</span>
+          <strong>{{ month.total | currency:'INR':'symbol':'1.0-0' }}</strong>
+          <p>{{ month.count }} {{ activeTab() === 'sale' ? 'sales' : 'services' }}</p>
+        </article>
+      </div>
+
+      <div class="table-list" *ngIf="!isLoading(); else loadingState">
+        <article *ngFor="let record of monthlyRecords()">
+          <div>
+            <h3>{{ record.customerName }}</h3>
+            <p>{{ record.brand }} {{ record.phoneModel }}</p>
+            <span>{{ record.date | date:'mediumDate' }}</span>
+          </div>
+          <div class="value-stack">
+            <strong class="amount-badge">
+              <small>{{ activeTab() === 'sale' ? 'Sale price' : 'Service price' }}</small>
+              {{ record.amount | currency:'INR':'symbol':'1.0-0' }}
+            </strong>
+            <p class="profit-badge">
+              <small>Profit</small>
+              {{ record.profit | currency:'INR':'symbol':'1.0-0' }}
+            </p>
+          </div>
+          <p class="notes">{{ record.notes || 'No additional notes' }}</p>
+          <div class="actions">
+            <button type="button" (click)="editRecord(record)">Edit</button>
+            <button type="button" class="danger" (click)="promptDelete(record)">Delete</button>
+          </div>
+        </article>
+
+        <p class="empty-state" *ngIf="!monthlyRecords().length">No records for the selected month.</p>
+      </div>
+    </section>
+
+  </div>
+</section>
+
+<ng-template #loadingState>
+  <p class="empty-state">Loading records...</p>
+</ng-template>
+
+<div class="modal-backdrop" *ngIf="recordPendingDelete() as record">
+  <section class="confirm-modal">
+    <p class="card-label">Delete confirmation</p>
+    <h3>Delete this {{ activeTab() === 'sale' ? 'sale' : 'service' }} record?</h3>
+    <p class="modal-copy">
+      This will remove the record for <strong>{{ record.customerName }}</strong> permanently.
+    </p>
+    <div class="modal-values">
+      <span>{{ record.brand }} {{ record.phoneModel }}</span>
+      <strong>{{ record.amount | currency:'INR':'symbol':'1.0-0' }}</strong>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="ghost-button" (click)="cancelDelete()">Cancel</button>
+      <button type="button" class="danger modal-danger" (click)="confirmDelete()">Delete record</button>
+    </div>
+  </section>
+</div>
