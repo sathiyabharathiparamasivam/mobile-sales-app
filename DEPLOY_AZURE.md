@@ -95,7 +95,7 @@ Two workflows are included:
 
 #### API
 
-- `AZUREAPPSERVICE_PUBLISHPROFILE`
+- `AZURE_CREDENTIALS`
 
 ### One Required Edit
 
@@ -110,3 +110,13 @@ app-name: YOUR_API_APP_SERVICE_NAME
 ```
 
 with your actual Azure App Service name.
+
+### Azure Credentials Secret For API
+
+The API workflow now uses `azure/login` instead of a publish profile, so you need a GitHub secret named:
+
+```text
+AZURE_CREDENTIALS
+```
+
+Its value should be the JSON output from an Azure service principal created for GitHub Actions deployment.
