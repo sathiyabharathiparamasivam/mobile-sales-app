@@ -49,11 +49,6 @@ const swaggerSpec = swaggerJsdoc({
       version: '1.0.0',
       description: 'API documentation for authentication, sales, and services transactions.'
     },
-    servers: [
-      {
-        url: `http://localhost:${port}`
-      }
-    ],
     components: {
       schemas: {
         LoginRequest: {
@@ -117,7 +112,28 @@ app.use(
   })
 );
 app.use(express.json());
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve);
+app.get(
+  '/api-docs',
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      urls: []
+    }
+  })
+);
+app.get('/api-docs.json', (request, response) => {
+  const protocol = request.headers['x-forwarded-proto'] || request.protocol;
+  const host = request.get('host');
+
+  response.json({
+    ...swaggerSpec,
+    servers: [
+      {
+        url: `${protocol}://${host}`
+      }
+    ]
+  });
+});
 
 if (!userDbConfig.CONNECTION_STRING) {
   console.error('MongoDB connection string is missing. Set CONNECTION_STRING before starting the API.');
